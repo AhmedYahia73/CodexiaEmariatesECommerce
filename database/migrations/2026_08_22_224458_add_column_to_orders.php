@@ -12,8 +12,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('orders', function (Blueprint $table) {
-            $table->enum("payment_status", ["pending", "approve", "reject", "faild"])->default("pending");
-            $table->enum("status", ["pending", "inprogress", "delivered", "faild_delivered", "return"])->default("pending");
+            $table->string("transaction_id")->nullable();
         });
     }
 

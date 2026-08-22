@@ -6,8 +6,11 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\RateLimiter;
 use App\trait\image;
+use Stripe\Stripe;
+use Stripe\PaymentIntent;
 
 use App\Models\CartProduct;
 use App\Models\Order;
@@ -23,17 +26,28 @@ class UserOrderController extends Controller
 
     public function make_order(Request $request){
         $validator = Validator::make($request->all(), [
-            'payment_method_id'   => 'required|exists:payment_methods,id',
+            'payment_method_id'   => 'sometimes|exists:payment_methods,id',
             'address_id'          => 'required|exists:addresses,id',
             'receipt'             => 'sometimes|image',
             'cart_product_ids'    => 'required|array',
             'cart_product_ids.*'  => 'required|exists:cart_products,id',
             'coupon_code'         => 'sometimes',
+            "payment_type"        => "required|in:offline,stripe"
         ]);
         if ($validator->fails()) {
             return response()->json(['errors' => $validator->errors()], 400);
         }
 
+        if($request->payment_type == "offline" && !$request->payment_method_id){
+            return response()->json([
+                "errors" => "payment method is required"
+            ], 400);
+        }
+        if($request->payment_type == "offline" && !$request->receipt){
+            return response()->json([
+                "errors" => "receipt is required"
+            ], 400);
+        }
         // تحميل الـ cart items تبع اليوزر فقط
         $cartProducts = CartProduct::with([
             'product',
@@ -115,6 +129,83 @@ class UserOrderController extends Controller
             $coupon->increment('users_count');
         }
 
+        // ── Stripe payment ────────────────────────────────────────────────
+        if ($request->payment_type === 'stripe') {
+
+            // 1. Create order with payment_status = 'faild'
+            //    (webhook will change it to 'approve' on success)
+            $order = Order::create([
+                'price'           => $total_price,
+                'discount'        => $total_discount,
+                'coupon_discount' => $coupon_discount,
+                'coupon_id'       => $coupon_id,
+                'user_id'         => $request->user()->id,
+                'address_id'      => $request->address_id,
+                'final_price'     => $total_final,
+                'payment_status'  => 'faild',
+                'status'          => 'pending',
+            ]);
+
+            // 2. Save order products & options
+            foreach ($products as $item) {
+                $order_product = OrderProduct::create([
+                    'product_id'  => $item['product_id'],
+                    'discount'    => $item['discount'],
+                    'price'       => $item['price'],
+                    'final_price' => $item['final_price'],
+                    'order_id'    => $order->id,
+                    'count'       => $item['count'],
+                ]);
+                foreach ($item['option_ids'] as $optionId) {
+                    OrderOption::create([
+                        'order_product_id' => $order_product->id,
+                        'option_id'        => $optionId,
+                    ]);
+                }
+            }
+
+            // 3. Clear cart
+            CartProduct::whereIn('id', $request->cart_product_ids)
+                ->where('user_id', $request->user()->id)
+                ->delete();
+
+            // 4. Create Stripe PaymentIntent
+            //    AED smallest unit = fils (1 AED = 100 fils)
+            try {
+                Stripe::setApiKey(config('services.stripe.secret'));
+
+                $paymentIntent = PaymentIntent::create([
+                    'amount'   => (int) round($total_final * 100), // convert to fils
+                    'currency' => config('services.stripe.currency', 'aed'),
+                    'metadata' => [
+                        'order_id' => $order->id,
+                        'user_id'  => $request->user()->id,
+                    ],
+                ]);
+
+                // 5. Save transaction_id in the order
+                $order->update(['transaction_id' => $paymentIntent->id]);
+
+            } catch (\Exception $e) {
+                // If Stripe fails, delete the order and return error
+                $order->order_products()->delete();
+                $order->delete();
+
+                Log::error('Stripe PaymentIntent creation failed: ' . $e->getMessage());
+                return response()->json([
+                    'errors' => 'Payment gateway error. Please try again.',
+                ], 500);
+            }
+
+            return response()->json([
+                'message'            => 'Order created. Complete payment to confirm.',
+                'order_id'           => $order->id,
+                'client_secret'      => $paymentIntent->client_secret,
+                'payment_intent_id'  => $paymentIntent->id,
+            ], 201);
+        }
+
+        // ── Offline payment ───────────────────────────────────────────────
         $order = Order::create([
             'price'             => $total_price,
             'discount'          => $total_discount,
@@ -125,6 +216,8 @@ class UserOrderController extends Controller
             'address_id'        => $request->address_id,
             'final_price'       => $total_final,
             'receipt'           => $receipt,
+            'payment_status'    => 'pending',
+            'status'            => 'pending',
         ]);
 
         foreach ($products as $item) {
@@ -149,7 +242,7 @@ class UserOrderController extends Controller
             ->where('user_id', $request->user()->id)
             ->delete();
 
-        return response()->json(['message' => 'Order placed successfully', 'order_id' => $order->id]);
+        return response()->json(['message' => 'Order placed successfully', 'order_id' => $order->id], 201);
     }
 
     public function lists(Request $request){

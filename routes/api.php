@@ -21,11 +21,15 @@ use App\Http\Controllers\api\user\UserCartController;
 use App\Http\Controllers\api\user\UserHomeController;
 use App\Http\Controllers\api\user\UserOrderController;
 use App\Http\Controllers\api\user\UserContactController;
+use App\Http\Controllers\api\StripeWebhookController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
 // Auth
 Route::post('login', [AuthController::class, 'login']);
+
+// Stripe Webhook — NO auth middleware (Stripe sends raw POST with signature)
+Route::post('stripe/webhook', [StripeWebhookController::class, 'handle']);
 
 // Public (no auth)
 Route::prefix('user')->group(function () {

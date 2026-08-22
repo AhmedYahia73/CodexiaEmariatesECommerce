@@ -18,6 +18,7 @@ class Order extends Model
         'receipt',
         'payment_status',
         'status',
+        'transaction_id',
     ];
     protected $appends = ["receipt_url"];
  
