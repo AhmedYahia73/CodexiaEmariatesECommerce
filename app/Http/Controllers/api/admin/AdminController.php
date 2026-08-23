@@ -34,6 +34,7 @@ class AdminController extends Controller
 
         $data = $request->only(['name', 'email', 'password', 'phone']);
         $data['role'] = 'admin';
+        $data['active'] = true;
 
         if ($request->hasFile('image')) {
             $data['image'] = $this->upload_image($request, 'image', 'users');
