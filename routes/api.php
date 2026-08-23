@@ -26,6 +26,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
 // Auth
+Route::get('main_settings', [AuthController::class, 'main_settings']);
 Route::post('login', [AuthController::class, 'login']);
 Route::post('check_code', [AuthController::class, 'check_code']);
 Route::post('sign_up', [AuthController::class, 'sign_up']);
