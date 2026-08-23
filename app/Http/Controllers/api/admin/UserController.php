@@ -14,7 +14,10 @@ class UserController extends Controller
 
     public function index()
     {
-        $users = User::where('role', 'user')->paginate(15);
+        $users = User::
+        where('role', 'user')
+        ->where("active", true)
+        ->paginate(15);
         return response()->json($users);
     }
 
@@ -32,6 +35,7 @@ class UserController extends Controller
             'email'    => 'required|email|unique:users,email',
             'password' => 'required|string|min:8',
             'phone'    => 'required|string',
+            "status"   => "required|boolean",
             'image'    => 'nullable|image',
         ]);
 
@@ -39,8 +43,9 @@ class UserController extends Controller
             return response()->json(['errors' => $validator->errors()], 400);
         }
 
-        $data = $request->only(['name', 'email', 'password', 'phone']);
+        $data = $request->only(['name', 'email', 'password', 'phone', 'status']);
         $data['role'] = 'user';
+        $data['active'] = true;
 
         if ($request->hasFile('image')) {
             $data['image'] = $this->upload_image($request, 'image', 'users');
@@ -72,6 +77,7 @@ class UserController extends Controller
             'password' => 'nullable|string|min:8',
             'phone'    => 'nullable|string',
             'image'    => 'nullable|image',
+            'status'   => 'sometimes|boolean',
         ]);
 
         if ($validator->fails()) {

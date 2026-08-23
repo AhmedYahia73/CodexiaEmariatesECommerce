@@ -40,6 +40,8 @@ class SettingController extends Controller
             'ios_app'       => 'nullable|string',
             'android_app'   => 'nullable|string',
             'min_order'     => ($isNew ? 'required' : 'nullable') . '|numeric|min:0',
+            "sign_up_code"  => "sometimes|boolean",
+            "currency"      => "sometimes"
         ]);
 
         if ($validator->fails()) {
@@ -50,6 +52,7 @@ class SettingController extends Controller
             'brand_name', 'phone', 'wattsapp', 'email',
             'address', 'lat', 'lng', 'facebook', 'insta',
             'tiktok', 'ios_app', 'android_app', 'min_order',
+            'sign_up_code', "currency"
         ]);
 
         if ($request->hasFile('logo')) {

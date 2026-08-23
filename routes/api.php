@@ -27,6 +27,8 @@ use Illuminate\Support\Facades\Route;
 
 // Auth
 Route::post('login', [AuthController::class, 'login']);
+Route::post('check_code', [AuthController::class, 'check_code']);
+Route::post('sign_up', [AuthController::class, 'sign_up']);
 
 // Stripe Webhook — NO auth middleware (Stripe sends raw POST with signature)
 Route::post('stripe/webhook', [StripeWebhookController::class, 'handle']);
