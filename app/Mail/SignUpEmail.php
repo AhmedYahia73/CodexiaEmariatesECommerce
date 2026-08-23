@@ -34,7 +34,7 @@ class SignUpEmail extends Mailable
     public function content(): Content
     {
         return new Content(
-            view: 'emails.welcome', // اسم ملف Blade
+            view: 'emails.Signup', // اسم ملف Blade
         );
     }
 
