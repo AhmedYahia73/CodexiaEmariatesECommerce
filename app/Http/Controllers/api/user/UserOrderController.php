@@ -258,6 +258,7 @@ class UserOrderController extends Controller
         ->get()
         ->map(function($item) use($lang){
             return [
+                'id' => $item->id, 
                 'name' => $item->name[$lang], 
                 'description' => $item->description[$lang], 
                 'icon' => $item->icon_url, 
