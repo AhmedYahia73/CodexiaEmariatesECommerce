@@ -45,11 +45,11 @@ class UserProfileController extends Controller
             $image = null;
         }
 
-        User::where("id", auth()->id)
+        User::where("id", auth()->user()->id)
         ->update([
-            "name" => $request->name ?? auth()->name,
-            "email" => $request->email ?? auth()->email,
-            "phone" => $request->phone ?? auth()->phone,
+            "name" => $request->name ?? auth()->user()->name,
+            "email" => $request->email ?? auth()->user()->email,
+            "phone" => $request->phone ?? auth()->user()->phone,
             "image" => $image,
         ]);
 
