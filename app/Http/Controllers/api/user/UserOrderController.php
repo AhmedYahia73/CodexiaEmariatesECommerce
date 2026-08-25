@@ -42,12 +42,7 @@ class UserOrderController extends Controller
             return response()->json([
                 "errors" => "payment method is required"
             ], 400);
-        }
-        if($request->payment_type == "offline" && !$request->receipt){
-            return response()->json([
-                "errors" => "receipt is required"
-            ], 400);
-        }
+        } 
         // تحميل الـ cart items تبع اليوزر فقط
         $cartProducts = CartProduct::with([
             'product',
