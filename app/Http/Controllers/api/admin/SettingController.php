@@ -28,6 +28,7 @@ class SettingController extends Controller
             'brand_name.en' => ($isNew ? 'required' : 'nullable') . '|string',
             'brand_name.ar' => ($isNew ? 'required' : 'nullable') . '|string',
             'logo'          => 'nullable|image',
+            'logo2'         => 'nullable|image',
             'phone'         => ($isNew ? 'required' : 'nullable') . '|string',
             'wattsapp'      => ($isNew ? 'required' : 'nullable') . '|string',
             'email'         => ($isNew ? 'required' : 'nullable') . '|email',
@@ -59,6 +60,12 @@ class SettingController extends Controller
             $data['logo'] = $isNew
                 ? $this->upload_image($request, 'logo', 'settings')
                 : $this->update_image_v2($request, $setting->logo, 'logo', 'settings');
+        }
+
+        if ($request->hasFile('logo2')) {
+            $data['logo2'] = $isNew
+                ? $this->upload_image($request, 'logo2', 'settings')
+                : $this->update_image_v2($request, $setting->logo2, 'logo2', 'settings');
         }
 
         if ($isNew) {

@@ -22,9 +22,10 @@ class Setting extends Model
         'android_app',
         'min_order',
         'currency',
+        'logo2'
     ];
 
-    protected $appends = ["logo_url", "map"];
+    protected $appends = ["logo_url", "map", "logo2_url"];
 
 
     public function getMapAttribute(){
@@ -44,6 +45,14 @@ class Setting extends Model
     {
         if (isset($this->attributes['logo'])) {
             return asset('storage/' . $this->attributes['logo']);
+        }
+        return null;
+    }
+
+    public function getLogo2UrlAttribute()
+    {
+        if (isset($this->attributes['logo2'])) {
+            return asset('storage/' . $this->attributes['logo2']);
         }
         return null;
     }
