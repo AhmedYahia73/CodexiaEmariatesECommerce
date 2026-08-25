@@ -24,37 +24,41 @@ class UserProfileController extends Controller
     }
 
     public function update_profile(Request $request){
+        $user = auth()->user();
 
         $validator = Validator::make($request->all(), [
-            'name'    => 'sometimes',
-            'email'    => 'sometimes|email|exists:users,email,' . auth()->user()->id,
-            'phone'    => 'sometimes|exists:users,phone,' . auth()->user()->id,
-            'image'    => 'sometimes',
-            'delete_image' => "required|boolean"
+            'name'         => 'sometimes',
+            // استخدمنا unique بدلاً من exists لكي نتأكد أن الإيميل غير مكرر، مع استثناء المستخدم الحالي
+            'email'        => 'sometimes|email|unique:users,email,' . $user->id,
+            'phone'        => 'sometimes|unique:users,phone,' . $user->id,
+            'image'        => 'sometimes|image', 
+            'delete_image' => 'required|boolean'
         ]); 
+
         if ($validator->fails()) {
             return response()->json(['errors' => $validator->errors()], 400);
         }
 
-        $image = auth()->image;
+        // استدعاء صورة المستخدم بشكل صحيح
+        $image = $user->image;
 
-        if($request->image){
+        if ($request->hasFile('image')) {
             $image = $this->update_image($request, $image, 'image', 'users');
-        }
-        elseif($request->delete_image){
+        } elseif ($request->delete_image) {
+            // يفضل إضافة كود هنا لحذف الصورة القديمة من السيرفر إذا لزم الأمر
             $image = null;
         }
 
-        User::where("id", auth()->user()->id)
-        ->update([
-            "name" => $request->name ?? auth()->user()->name,
-            "email" => $request->email ?? auth()->user()->email,
-            "phone" => $request->phone ?? auth()->user()->phone,
+        // تحديث بيانات المستخدم
+        $user->update([
+            "name"  => $request->name ?? $user->name,
+            "email" => $request->email ?? $user->email,
+            "phone" => $request->phone ?? $user->phone,
             "image" => $image,
         ]);
 
         return response()->json([
-            "success" => "You update profile success"
+            "success" => "Profile updated successfully"
         ]);
     }
 }
