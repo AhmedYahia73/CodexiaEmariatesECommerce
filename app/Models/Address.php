@@ -16,6 +16,7 @@ class Address extends Model
         'city_id',
         'zone_id',
         'additional_data',
+        'user_id',
     ];
     protected $appends = ["map"];
  
