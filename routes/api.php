@@ -2,10 +2,11 @@
 
 use App\Http\Controllers\api\admin\AboutController;
 use App\Http\Controllers\api\admin\AdminController;
-use App\Http\Controllers\api\admin\HomeController;
 use App\Http\Controllers\api\admin\CategoryController;
 use App\Http\Controllers\api\admin\CityController;
+use App\Http\Controllers\api\admin\ContactController;
 use App\Http\Controllers\api\admin\CouponController;
+use App\Http\Controllers\api\admin\HomeController;
 use App\Http\Controllers\api\admin\OrderController;
 use App\Http\Controllers\api\admin\PaymentMethodController;
 use App\Http\Controllers\api\admin\ProductController;
@@ -13,15 +14,15 @@ use App\Http\Controllers\api\admin\ServiceController;
 use App\Http\Controllers\api\admin\SettingController;
 use App\Http\Controllers\api\admin\UserController;
 use App\Http\Controllers\api\admin\ZoneController;
-use App\Http\Controllers\api\admin\ContactController;
 use App\Http\Controllers\api\auth\AuthController;
+use App\Http\Controllers\api\StripeWebhookController;
 use App\Http\Controllers\api\user\UserAboutController;
 use App\Http\Controllers\api\user\UserAddressController;
 use App\Http\Controllers\api\user\UserCartController;
+use App\Http\Controllers\api\user\UserContactController;
 use App\Http\Controllers\api\user\UserHomeController;
 use App\Http\Controllers\api\user\UserOrderController;
-use App\Http\Controllers\api\user\UserContactController;
-use App\Http\Controllers\api\StripeWebhookController;
+use App\Http\Controllers\api\user\UserProfileController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -166,6 +167,10 @@ Route::middleware(['auth:sanctum', "admin"])
 
 Route::middleware(['auth:sanctum', "user"])
 ->prefix("user")->group(function () {
+
+    // Profile lists 
+    Route::get('profile', [UserProfileController::class, 'profile']);
+    Route::post('update_profile', [UserProfileController::class, 'update_profile']);
 
     // Address lists 
     Route::get('addresses/cities', [UserAddressController::class, 'cities']);
