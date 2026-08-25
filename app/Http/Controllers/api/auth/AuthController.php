@@ -302,7 +302,7 @@ class AuthController extends Controller
         $user->save();
 
         return response()->json([
-            "success" => "You must change your password success"
+            "success" => "You change your password success"
         ]);
     }
 }
