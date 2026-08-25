@@ -32,6 +32,11 @@ Route::post('login', [AuthController::class, 'login']);
 Route::post('check_code', [AuthController::class, 'check_code']);
 Route::post('sign_up', [AuthController::class, 'sign_up']);
 
+// Forget Password (public — no auth required)
+Route::post('forget_password', [AuthController::class, 'forget_password']);
+Route::post('check_code_forget_password', [AuthController::class, 'check_code_forget_password']);
+Route::post('new_password_forget_password', [AuthController::class, 'new_password_forget_password']);
+
 // Stripe Webhook — NO auth middleware (Stripe sends raw POST with signature)
 Route::post('stripe/webhook', [StripeWebhookController::class, 'handle']);
 

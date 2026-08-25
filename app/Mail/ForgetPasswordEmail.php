@@ -10,12 +10,12 @@ use Illuminate\Mail\Mailables\Content;
 use Illuminate\Mail\Mailables\Envelope;
 use Illuminate\Queue\SerializesModels;
 
-class SignUpEmail extends Mailable
+class ForgetPasswordEmail extends Mailable
 {
     use Queueable, SerializesModels;
-    
+
     public $code;
- 
+
     public function __construct($code)
     {
         $this->code = $code;
@@ -24,14 +24,17 @@ class SignUpEmail extends Mailable
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: 'Sign Up Email',
+            subject: 'Forget Password Email',
         );
     }
- 
+
+    /**
+     * Get the message content definition.
+     */
     public function content(): Content
     {
         return new Content(
-            view: 'emails.Signup', // اسم ملف Blade
+            view: 'emails.ForgetPassword',
         );
     }
 

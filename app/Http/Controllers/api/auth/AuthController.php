@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\api\auth;
 
 use App\Http\Controllers\Controller;
+use App\Mail\ForgetPasswordEmail;
 use App\Mail\SignUpEmail;
 use App\Models\Setting;
 use App\Models\User;
@@ -187,6 +188,121 @@ class AuthController extends Controller
 
         return response()->json([
             "settings" => $settings,
+        ]);
+    }
+
+    public function forget_password(Request $request){
+        $validator = Validator::make($request->all(), [
+            'email'    => 'required|email', 
+        ]); 
+        if ($validator->fails()) {
+            return response()->json(['errors' => $validator->errors()], 400);
+        }
+
+        $key = 'forget_password_' . $request->email . '_' . $request->ip();
+
+        if (\Illuminate\Support\Facades\RateLimiter::tooManyAttempts($key, 3)) {
+            $seconds = \Illuminate\Support\Facades\RateLimiter::availableIn($key);
+            return response()->json([
+                'success' => false,
+                'errors'  => "لقد تجاوزت الحد المسموح من المحاولات. يرجى الانتظار {$seconds} ثانية ثم المحاولة مجدداً.",
+            ], 429);
+        }
+
+        $code = rand(1000000, 9999999);
+        $user = User::where("email", $request->email)->first();
+        if(!$user){
+            \Illuminate\Support\Facades\RateLimiter::hit($key, 180);
+            return response()->json([
+                "errors" => "Email is wrong"
+            ], 400);
+        }
+
+        \Illuminate\Support\Facades\RateLimiter::hit($key, 180);
+        Mail::to($request->email)->send(new ForgetPasswordEmail($code));
+        $user->code = $code;
+        $user->save();
+
+        return response()->json([
+            "success" => "You must check your email"
+        ]);
+    }
+
+    public function check_code_forget_password(Request $request){
+        $validator = Validator::make($request->all(), [
+            'email'    => 'required|email', 
+            'code'    => 'required', 
+        ]); 
+        if ($validator->fails()) {
+            return response()->json(['errors' => $validator->errors()], 400);
+        }
+
+        $key = 'check_code_forget_password_' . $request->email . '_' . $request->ip();
+
+        if (\Illuminate\Support\Facades\RateLimiter::tooManyAttempts($key, 3)) {
+            $seconds = \Illuminate\Support\Facades\RateLimiter::availableIn($key);
+            return response()->json([
+                'success' => false,
+                'errors'  => "لقد تجاوزت الحد المسموح من المحاولات. يرجى الانتظار {$seconds} ثانية ثم المحاولة مجدداً.",
+            ], 429);
+        }
+
+        $user = User::
+        where("email", $request->email)
+        ->where("code", $request->code)
+        ->first();
+        if(!$user){
+            \Illuminate\Support\Facades\RateLimiter::hit($key, 180);
+            return response()->json([
+                "errors" => "code is wrong"
+            ], 400);
+        }
+
+        \Illuminate\Support\Facades\RateLimiter::clear($key);
+        return response()->json([
+            "success" => "You must change your password success"
+        ]);
+    }
+
+    public function new_password_forget_password(Request $request){
+        $validator = Validator::make($request->all(), [
+            'email'    => 'required|email', 
+            'code'    => 'required', 
+            'new_password'    => 'required', 
+        ]); 
+        if ($validator->fails()) {
+            return response()->json(['errors' => $validator->errors()], 400);
+        }
+
+        $key = 'new_password_forget_password_' . $request->email . '_' . $request->ip();
+
+        if (\Illuminate\Support\Facades\RateLimiter::tooManyAttempts($key, 3)) {
+            $seconds = \Illuminate\Support\Facades\RateLimiter::availableIn($key);
+            return response()->json([
+                'success' => false,
+                'errors'  => "لقد تجاوزت الحد المسموح من المحاولات. يرجى الانتظار {$seconds} ثانية ثم المحاولة مجدداً.",
+            ], 429);
+        }
+
+        $user = User::
+        where("email", $request->email)
+        ->where("code", $request->code)
+        ->first();
+
+        if (!$user) {
+            \Illuminate\Support\Facades\RateLimiter::hit($key, 180);
+            return response()->json([
+                "errors" => "code is wrong"
+            ], 400);
+        }
+
+        \Illuminate\Support\Facades\RateLimiter::clear($key);
+        $user->password = bcrypt($request->new_password);
+        $user->code = null;
+        $user->save();
+
+        return response()->json([
+            "success" => "You must change your password success"
         ]);
     }
 }

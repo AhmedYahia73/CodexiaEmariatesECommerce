@@ -164,6 +164,11 @@ class OrderController extends Controller
         if (!$order) {
             return response()->json(['message' => 'Not found'], 404);
         }
+        if($request->status == "delivered"){
+            $order->user()->increment('order_count', 1);
+            $order->user()->increment('order_sum', $order->final_price);
+        }
+
 
         $order->update(['status' => $request->status]);
         return response()->json(['status' => $order->status]);
