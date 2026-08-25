@@ -27,7 +27,7 @@ class UserProfileController extends Controller
 
         $validator = Validator::make($request->all(), [
             'name'    => 'sometimes',
-            'email'    => 'sometimes|email|exists:users,email,' . auth()->id,
+            'email'    => 'sometimes|email|exists:users,email,' . auth()->user()->id,
             'phone'    => 'sometimes|exists:users,phone,' . auth()->user()->id,
             'image'    => 'sometimes',
             'delete_image' => "required|boolean"
