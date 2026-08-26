@@ -22,7 +22,7 @@ class Setting extends Model
         'android_app',
         'min_order',
         'currency',
-        'logo2'
+        'logo2',
     ];
 
     protected $appends = ["logo_url", "map", "logo2_url"];
